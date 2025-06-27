@@ -31,6 +31,8 @@ export class Web3Service {
       
       console.log("Web3Service: Getting signer");
       this.signer = await this.provider.getSigner();
+      
+      console.log("Web3Service: Getting address");
       const address = await this.signer.getAddress();
       const isOwner = address.toLowerCase() === OWNER_WALLET.toLowerCase();
 
