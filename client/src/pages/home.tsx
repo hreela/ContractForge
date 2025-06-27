@@ -11,6 +11,7 @@ import FeatureSelector from "@/components/feature-selector";
 import DeploymentModal from "@/components/deployment-modal";
 import { TokenConfig, FeatureConfig } from "@/types/contract";
 import { apiRequest } from "@/lib/queryClient";
+import { CONTRACT_FEATURES } from "@/lib/constants";
 
 export default function Home() {
   const [walletState, setWalletState] = useState({
@@ -52,6 +53,14 @@ export default function Home() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const calculateTotalCost = (features: string[]) => {
+    const baseCost = 5;
+    const featureCost = features.reduce((sum, feature) => {
+      return sum + (CONTRACT_FEATURES.find(f => f.name === feature)?.price || 0);
+    }, 0);
+    return baseCost + featureCost;
   };
 
   const validateForm = (): boolean => {
@@ -116,24 +125,39 @@ export default function Home() {
       
       // Check if payment is required (not owner wallet)
       if (!walletState.isOwner && result.totalCost > 0) {
+        try {
+          toast({
+            title: "Processing Payment",
+            description: `Requesting payment of $${result.totalCost} POL. Please confirm in MetaMask...`,
+          });
+          
+          // Initiate payment through web3Service
+          const { web3Service } = await import("@/lib/web3");
+          const paymentTxHash = await web3Service.payDeploymentFee(result.totalCost * 0.01); // Convert POL to MATIC (1 POL = 0.01 MATIC)
+          
+          toast({
+            title: "Payment Transaction Sent",
+            description: "Waiting for payment confirmation...",
+          });
+          
+          // Update contract as paid
+          await apiRequest('POST', `/api/contracts/${result.contractId}/payment`, {
+            paymentTxHash,
+            amount: result.totalCost,
+          });
+          
+          toast({
+            title: "Payment Successful",
+            description: "Payment confirmed. Proceeding with deployment...",
+          });
+        } catch (paymentError: any) {
+          console.error('Payment failed:', paymentError);
+          throw new Error(`Payment failed: ${paymentError.message || 'User rejected transaction'}`);
+        }
+      } else if (walletState.isOwner) {
         toast({
-          title: "Payment Required",
-          description: `Please pay $${result.totalCost} POL to deploy this contract.`,
-        });
-        
-        // Initiate payment through web3Service
-        const { web3Service } = await import("@/lib/web3");
-        const paymentTxHash = await web3Service.payDeploymentFee(result.totalCost / 100); // Convert to MATIC
-        
-        // Update contract as paid
-        await apiRequest('POST', `/api/contracts/${result.contractId}/payment`, {
-          paymentTxHash,
-          amount: result.totalCost,
-        });
-        
-        toast({
-          title: "Payment Successful",
-          description: "Payment confirmed. Proceeding with deployment...",
+          title: "Owner Deployment",
+          description: "Proceeding with free deployment for admin wallet...",
         });
       }
       
@@ -307,7 +331,20 @@ export default function Home() {
                   className="w-full bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary py-4 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Zap className="w-5 h-5" />
-                  <span>{isDeploying ? "Deploying..." : "Deploy Smart Contract"}</span>
+                  <span>
+                    {isDeploying 
+                      ? "Processing..." 
+                      : walletState.isOwner 
+                        ? "Deploy Free (Admin)" 
+                        : `Deploy ($${(() => {
+                            const baseCost = 5;
+                            const featureCost = selectedFeatures.reduce((sum, feature) => {
+                              return sum + (CONTRACT_FEATURES.find(f => f.name === feature)?.price || 0);
+                            }, 0);
+                            return baseCost + featureCost;
+                          })()} POL)`
+                    }
+                  </span>
                 </Button>
                 
                 <p className="text-xs text-gray-400 text-center flex items-center justify-center">
