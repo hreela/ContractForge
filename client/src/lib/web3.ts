@@ -12,26 +12,32 @@ export class Web3Service {
   private signer: ethers.JsonRpcSigner | null = null;
 
   async connectWallet(): Promise<{ address: string; isOwner: boolean }> {
+    console.log("Web3Service: Starting wallet connection");
+    
     if (!window.ethereum) {
+      console.error("Web3Service: MetaMask not detected");
       throw new Error("Please install MetaMask to use this application");
     }
 
     try {
+      console.log("Web3Service: Creating provider");
       this.provider = new ethers.BrowserProvider(window.ethereum);
       
-      // Request account access
+      console.log("Web3Service: Requesting account access");
       await window.ethereum.request({ method: "eth_requestAccounts" });
       
-      // Switch to Polygon network
+      console.log("Web3Service: Switching to Polygon network");
       await this.switchToPolygon();
       
+      console.log("Web3Service: Getting signer");
       this.signer = await this.provider.getSigner();
       const address = await this.signer.getAddress();
       const isOwner = address.toLowerCase() === OWNER_WALLET.toLowerCase();
 
+      console.log("Web3Service: Connection successful", { address, isOwner });
       return { address, isOwner };
     } catch (error) {
-      console.error("Error connecting wallet:", error);
+      console.error("Web3Service: Error connecting wallet:", error);
       throw error;
     }
   }

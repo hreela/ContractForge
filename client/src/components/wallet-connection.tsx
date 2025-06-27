@@ -43,8 +43,18 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
 
   const connectWallet = async () => {
     setIsConnecting(true);
+    console.log("Starting wallet connection...");
+    
     try {
+      // Check if MetaMask is installed
+      if (!window.ethereum) {
+        throw new Error("Please install MetaMask to connect your wallet");
+      }
+      
+      console.log("MetaMask detected, connecting...");
       const { address: walletAddress, isOwner: ownerStatus } = await web3Service.connectWallet();
+      
+      console.log("Wallet connected:", walletAddress, "isOwner:", ownerStatus);
       
       setAddress(walletAddress);
       setIsOwner(ownerStatus);
@@ -64,9 +74,19 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
       }
     } catch (error: any) {
       console.error("Error connecting wallet:", error);
+      
+      let errorMessage = "Failed to connect wallet";
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.code === 4001) {
+        errorMessage = "Connection rejected by user";
+      } else if (error.code === -32002) {
+        errorMessage = "Connection request already pending";
+      }
+      
       toast({
         title: "Connection Failed",
-        description: error.message || "Failed to connect wallet",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
