@@ -110,14 +110,38 @@ export default function Home() {
         deployerAddress: walletState.address,
       };
       
+      // Generate contract and get pricing info
       const response = await apiRequest('POST', '/api/generate-contract', deploymentData);
       const result = await response.json();
+      
+      // Check if payment is required (not owner wallet)
+      if (!walletState.isOwner && result.totalCost > 0) {
+        toast({
+          title: "Payment Required",
+          description: `Please pay $${result.totalCost} POL to deploy this contract.`,
+        });
+        
+        // Initiate payment through web3Service
+        const { web3Service } = await import("@/lib/web3");
+        const paymentTxHash = await web3Service.payDeploymentFee(result.totalCost / 100); // Convert to MATIC
+        
+        // Update contract as paid
+        await apiRequest('POST', `/api/contracts/${result.contractId}/payment`, {
+          paymentTxHash,
+          amount: result.totalCost,
+        });
+        
+        toast({
+          title: "Payment Successful",
+          description: "Payment confirmed. Proceeding with deployment...",
+        });
+      }
       
       setDeploymentModal({
         isOpen: true,
         contractId: result.contractId,
         contractCode: result.contractCode,
-        deploymentData,
+        deploymentData: { ...deploymentData, totalCost: result.totalCost, isOwnerDeployment: result.isOwnerDeployment },
       });
       
     } catch (error: any) {

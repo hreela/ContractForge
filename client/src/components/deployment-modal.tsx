@@ -72,8 +72,15 @@ export default function DeploymentModal({
       
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Update contract in database
-      await apiRequest('POST', `/api/contracts/${contractId}/deployed`, mockDeploymentResult);
+      // Update contract in database - this will now check payment status
+      try {
+        await apiRequest('POST', `/api/contracts/${contractId}/deployed`, mockDeploymentResult);
+      } catch (error: any) {
+        if (error.status === 402) {
+          throw new Error("Payment required before deployment. Please complete payment first.");
+        }
+        throw error;
+      }
       
       updateStep('deploy', 'completed');
       setProgress(66);
@@ -92,7 +99,7 @@ export default function DeploymentModal({
         title: "Deployment Successful!",
         description: "Your smart contract has been deployed and verified.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Deployment failed:', error);
       const currentStep = steps.find(s => s.status === 'in-progress');
       if (currentStep) {
@@ -101,7 +108,7 @@ export default function DeploymentModal({
       
       toast({
         title: "Deployment Failed",
-        description: "There was an error deploying your contract. Please try again.",
+        description: error.message || "There was an error deploying your contract. Please try again.",
         variant: "destructive",
       });
     } finally {

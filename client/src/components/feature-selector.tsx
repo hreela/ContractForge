@@ -318,6 +318,18 @@ export default function FeatureSelector({
               </span>
             </div>
             
+            {!isOwner && totalCost > 0 && (
+              <div className="bg-amber-500/20 border border-amber-500/30 rounded-lg p-3 mt-3">
+                <div className="flex items-center space-x-2 text-amber-400 text-sm">
+                  <FeatureIcon name="coins" className="w-4 h-4" />
+                  <span className="font-medium">Payment Required</span>
+                </div>
+                <p className="text-amber-300 text-xs mt-1">
+                  You will be prompted to pay ${totalCost} POL before deployment.
+                </p>
+              </div>
+            )}
+            
             <div className="text-xs text-gray-400 mt-2 flex items-center">
               <FeatureIcon name="coins" className="w-3 h-3 mr-1" />
               Plus network gas fees for deployment

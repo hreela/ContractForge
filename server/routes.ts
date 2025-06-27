@@ -83,6 +83,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Handle payment for contract deployment
+  app.post("/api/contracts/:id/payment", async (req, res) => {
+    try {
+      const contractId = parseInt(req.params.id);
+      const { paymentTxHash, amount } = req.body;
+
+      if (!paymentTxHash || !amount) {
+        return res.status(400).json({ error: "Payment transaction hash and amount are required" });
+      }
+
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: "Contract not found" });
+      }
+
+      if (contract.isOwnerDeployment) {
+        return res.status(400).json({ error: "Owner deployments don't require payment" });
+      }
+
+      if (amount < contract.totalCost) {
+        return res.status(400).json({ error: "Insufficient payment amount" });
+      }
+
+      // Update contract as paid
+      const updatedContract = await storage.updateContract(contractId, {
+        isPaid: true,
+      });
+
+      res.json({ success: true, contract: updatedContract });
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      res.status(500).json({ error: "Failed to process payment" });
+    }
+  });
+
   // Update contract with deployment info
   app.post("/api/contracts/:id/deployed", async (req, res) => {
     try {
@@ -93,17 +128,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Contract address and transaction hash are required" });
       }
 
-      const contract = await storage.updateContract(contractId, {
+      const contract = await storage.getContract(contractId);
+      if (!contract) {
+        return res.status(404).json({ error: "Contract not found" });
+      }
+
+      // Check if payment is required and completed
+      if (!contract.isOwnerDeployment && !contract.isPaid) {
+        return res.status(402).json({ error: "Payment required before deployment" });
+      }
+
+      const updatedContract = await storage.updateContract(contractId, {
         contractAddress,
         transactionHash,
         deployedAt: new Date(),
       });
 
-      if (!contract) {
-        return res.status(404).json({ error: "Contract not found" });
-      }
-
-      res.json(contract);
+      res.json(updatedContract);
     } catch (error) {
       console.error("Error updating contract deployment:", error);
       res.status(500).json({ error: "Failed to update contract" });
