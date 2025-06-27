@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, LogOut, Network } from "lucide-react";
+import { Wallet, LogOut, Network, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { web3Service } from "@/lib/web3";
 import { useToast } from "@/hooks/use-toast";
 import { OWNER_WALLET } from "@/lib/constants";
@@ -10,11 +10,15 @@ interface WalletConnectionProps {
   onConnectionChange: (connected: boolean, address?: string, isOwner?: boolean) => void;
 }
 
+type ConnectionStatus = 'idle' | 'connecting' | 'success' | 'error';
+
 export default function WalletConnection({ onConnectionChange }: WalletConnectionProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle');
+  const [showAnimation, setShowAnimation] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,6 +47,8 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
 
   const connectWallet = async () => {
     setIsConnecting(true);
+    setConnectionStatus('connecting');
+    setShowAnimation(true);
     console.log("Starting wallet connection...");
     
     try {
@@ -56,13 +62,21 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
       
       console.log("Wallet connected:", walletAddress, "isOwner:", ownerStatus);
       
-      setAddress(walletAddress);
-      setIsOwner(ownerStatus);
-      setIsConnected(true);
-      onConnectionChange(true, walletAddress, ownerStatus);
+      // Show success animation
+      setConnectionStatus('success');
+      
+      // Wait for animation before updating state
+      setTimeout(() => {
+        setAddress(walletAddress);
+        setIsOwner(ownerStatus);
+        setIsConnected(true);
+        onConnectionChange(true, walletAddress, ownerStatus);
+        setShowAnimation(false);
+        setConnectionStatus('idle');
+      }, 1500);
 
       toast({
-        title: "Wallet Connected",
+        title: "Wallet Connected Successfully",
         description: `Connected to ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`,
       });
 
@@ -75,6 +89,9 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
     } catch (error: any) {
       console.error("Error connecting wallet:", error);
       
+      // Show error animation
+      setConnectionStatus('error');
+      
       let errorMessage = "Failed to connect wallet";
       if (error.message) {
         errorMessage = error.message;
@@ -83,6 +100,12 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
       } else if (error.code === -32002) {
         errorMessage = "Connection request already pending";
       }
+      
+      // Hide animation after showing error
+      setTimeout(() => {
+        setShowAnimation(false);
+        setConnectionStatus('idle');
+      }, 2000);
       
       toast({
         title: "Connection Failed",
@@ -121,16 +144,19 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
           </Badge>
         )}
         
-        <div className="glass-effect px-4 py-2 rounded-lg flex items-center space-x-2">
-          <div className="w-3 h-3 bg-accent rounded-full animate-pulse"></div>
-          <span className="text-sm font-mono">
+        <div className="glass-effect px-4 py-2 rounded-lg flex items-center space-x-2 animate-fadeIn">
+          <div className="relative">
+            <div className="w-3 h-3 bg-accent rounded-full"></div>
+            <div className="absolute inset-0 w-3 h-3 bg-accent rounded-full animate-ping opacity-75"></div>
+          </div>
+          <span className="text-sm font-mono transition-all duration-300 hover:text-accent">
             {address.slice(0, 6)}...{address.slice(-4)}
           </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={disconnectWallet}
-            className="text-gray-400 hover:text-white p-1"
+            className="text-gray-400 hover:text-white p-1 transition-all duration-200 hover:scale-110"
           >
             <LogOut className="w-4 h-4" />
           </Button>
@@ -139,14 +165,74 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
     );
   }
 
+  const getButtonContent = () => {
+    if (showAnimation) {
+      switch (connectionStatus) {
+        case 'connecting':
+          return (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Connecting...</span>
+            </>
+          );
+        case 'success':
+          return (
+            <>
+              <CheckCircle className="w-4 h-4 text-green-400 animate-pulse" />
+              <span>Connected!</span>
+            </>
+          );
+        case 'error':
+          return (
+            <>
+              <XCircle className="w-4 h-4 text-red-400 animate-pulse" />
+              <span>Failed</span>
+            </>
+          );
+        default:
+          return (
+            <>
+              <Wallet className="w-4 h-4" />
+              <span>Connect Wallet</span>
+            </>
+          );
+      }
+    }
+    
+    return (
+      <>
+        <Wallet className="w-4 h-4" />
+        <span>{isConnecting ? "Connecting..." : "Connect Wallet"}</span>
+      </>
+    );
+  };
+
+  const getButtonClassName = () => {
+    let baseClasses = "px-6 py-2 rounded-lg font-semibold text-white transition-all duration-500 flex items-center space-x-2 transform";
+    
+    if (showAnimation) {
+      switch (connectionStatus) {
+        case 'connecting':
+          return `${baseClasses} bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse scale-105`;
+        case 'success':
+          return `${baseClasses} bg-gradient-to-r from-green-500 to-emerald-500 animate-bounceIn shadow-lg shadow-green-500/25`;
+        case 'error':
+          return `${baseClasses} bg-gradient-to-r from-red-500 to-pink-500 animate-shake shadow-lg shadow-red-500/25`;
+        default:
+          return `${baseClasses} bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary`;
+      }
+    }
+    
+    return `${baseClasses} bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary hover:scale-105`;
+  };
+
   return (
     <Button
       onClick={connectWallet}
-      disabled={isConnecting}
-      className="bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary px-6 py-2 rounded-lg font-semibold text-white transition-all duration-300 flex items-center space-x-2"
+      disabled={isConnecting || showAnimation}
+      className={getButtonClassName()}
     >
-      <Wallet className="w-4 h-4" />
-      <span>{isConnecting ? "Connecting..." : "Connect Wallet"}</span>
+      {getButtonContent()}
     </Button>
   );
 }
