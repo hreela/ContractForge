@@ -183,8 +183,10 @@ export default function FeatureSelector({
                           <h4 className="font-medium text-gray-300">Tax Settings</h4>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <Label className="text-sm text-gray-400">Tax Percentage (%)</Label>
+                              <Label htmlFor="tax-percentage" className="text-sm text-gray-400">Tax Percentage (%)</Label>
                               <Input
+                                id="tax-percentage"
+                                name="tax-percentage"
                                 type="number"
                                 min="0"
                                 max="25"
@@ -197,8 +199,10 @@ export default function FeatureSelector({
                               />
                             </div>
                             <div>
-                              <Label className="text-sm text-gray-400">Tax Recipient Address</Label>
+                              <Label htmlFor="tax-recipient" className="text-sm text-gray-400">Tax Recipient Address</Label>
                               <Input
+                                id="tax-recipient"
+                                name="tax-recipient"
                                 type="text"
                                 placeholder="0x..."
                                 value={localConfig.tax?.recipient || ''}
@@ -218,8 +222,10 @@ export default function FeatureSelector({
                           <h4 className="font-medium text-gray-300">Anti-Whale Settings</h4>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <Label className="text-sm text-gray-400">Max Transaction (% of supply)</Label>
+                              <Label htmlFor="antiwhale-max-transaction" className="text-sm text-gray-400">Max Transaction (% of supply)</Label>
                               <Input
+                                id="antiwhale-max-transaction"
+                                name="antiwhale-max-transaction"
                                 type="number"
                                 min="0.1"
                                 max="10"
@@ -233,8 +239,10 @@ export default function FeatureSelector({
                               />
                             </div>
                             <div>
-                              <Label className="text-sm text-gray-400">Max Wallet (% of supply)</Label>
+                              <Label htmlFor="antiwhale-max-wallet" className="text-sm text-gray-400">Max Wallet (% of supply)</Label>
                               <Input
+                                id="antiwhale-max-wallet"
+                                name="antiwhale-max-wallet"
                                 type="number"
                                 min="0.1"
                                 max="10"
@@ -255,8 +263,10 @@ export default function FeatureSelector({
                         <div className="space-y-4">
                           <h4 className="font-medium text-gray-300">Max Supply Settings</h4>
                           <div>
-                            <Label className="text-sm text-gray-400">Maximum Supply</Label>
+                            <Label htmlFor="max-supply" className="text-sm text-gray-400">Maximum Supply</Label>
                             <Input
+                              id="max-supply"
+                              name="max-supply"
                               type="text"
                               placeholder="1000000000"
                               value={localConfig.maxsupply?.maxSupply || ''}

@@ -274,8 +274,10 @@ export default function Home() {
                     
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-gray-300">Token Name</Label>
+                        <Label htmlFor="token-name" className="text-gray-300">Token Name</Label>
                         <Input
+                          id="token-name"
+                          name="token-name"
                           value={tokenConfig.name}
                           onChange={(e) => handleTokenConfigChange('name', e.target.value)}
                           placeholder="My Token"
@@ -284,8 +286,10 @@ export default function Home() {
                       </div>
                       
                       <div>
-                        <Label className="text-gray-300">Token Symbol</Label>
+                        <Label htmlFor="token-symbol" className="text-gray-300">Token Symbol</Label>
                         <Input
+                          id="token-symbol"
+                          name="token-symbol"
                           value={tokenConfig.symbol}
                           onChange={(e) => handleTokenConfigChange('symbol', e.target.value)}
                           placeholder="MTK"
@@ -294,8 +298,10 @@ export default function Home() {
                       </div>
                       
                       <div>
-                        <Label className="text-gray-300">Initial Supply</Label>
+                        <Label htmlFor="initial-supply" className="text-gray-300">Initial Supply</Label>
                         <Input
+                          id="initial-supply"
+                          name="initial-supply"
                           type="number"
                           value={tokenConfig.initialSupply}
                           onChange={(e) => handleTokenConfigChange('initialSupply', e.target.value)}
@@ -305,12 +311,13 @@ export default function Home() {
                       </div>
                       
                       <div>
-                        <Label className="text-gray-300">Decimals</Label>
+                        <Label htmlFor="token-decimals" className="text-gray-300">Decimals</Label>
                         <Select
+                          name="token-decimals"
                           value={tokenConfig.decimals.toString()}
                           onValueChange={(value) => handleTokenConfigChange('decimals', parseInt(value))}
                         >
-                          <SelectTrigger className="bg-surface-light border-gray-600">
+                          <SelectTrigger id="token-decimals" className="bg-surface-light border-gray-600">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
