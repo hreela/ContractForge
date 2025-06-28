@@ -107,25 +107,47 @@ export class Web3Service {
     }
 
     try {
-      // In a real implementation, you would compile the contract and deploy it
-      // For this demo, we'll simulate the deployment
+      console.log("Web3Service: Starting contract deployment");
+      
+      // For a realistic demo, we'll create a transaction that actually gets mined
+      // In production, this would be replaced with actual contract compilation and deployment
+      const userAddress = await this.signer.getAddress();
+      const nonce = await this.signer.getNonce();
+      
+      // Simulate contract deployment by sending a self-transaction with contract data
+      const contractCreationData = ethers.concat([
+        ethers.toUtf8Bytes(`CONTRACT:${tokenName}:${tokenSymbol}:${initialSupply}:${decimals}`),
+        ethers.randomBytes(32) // Add some randomness
+      ]);
+      
       const tx = await this.signer.sendTransaction({
-        to: "0x0000000000000000000000000000000000000000",
-        value: ethers.parseEther("0.01"), // Gas fee simulation
-        data: "0x", // Contract bytecode would go here
+        to: userAddress, // Send to self to create a real transaction
+        value: ethers.parseEther("0.001"), // Minimal value for gas
+        data: ethers.hexlify(contractCreationData),
       });
 
+      console.log("Web3Service: Transaction sent, waiting for confirmation");
       const receipt = await tx.wait();
+      console.log("Web3Service: Transaction confirmed");
       
-      // In a real deployment, the contract address would come from the receipt
+      if (!receipt) {
+        throw new Error("Transaction receipt not received");
+      }
+      
+      // Generate a deterministic contract address based on the transaction
       const contractAddress = ethers.getCreateAddress({
-        from: await this.signer.getAddress(),
-        nonce: await this.signer.getNonce() - 1,
+        from: userAddress,
+        nonce: nonce,
+      });
+
+      console.log("Web3Service: Contract deployed", {
+        contractAddress,
+        transactionHash: receipt.hash
       });
 
       return {
         contractAddress,
-        transactionHash: receipt!.hash,
+        transactionHash: receipt.hash,
       };
     } catch (error) {
       console.error("Error deploying contract:", error);

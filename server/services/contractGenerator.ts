@@ -270,42 +270,229 @@ contract {{TOKEN_NAME}} is ERC20, Ownable, Pausable {
     features: string[],
     featureConfig: Record<string, any> = {}
   ): string {
-    let contractCode = this.templates.standard
-      .replace(/{{TOKEN_NAME}}/g, name.replace(/\s+/g, ''))
-      .replace(/{{INITIAL_SUPPLY}}/g, initialSupply)
-      .replace(/{{DECIMALS}}/g, decimals.toString());
+    const tokenName = name.replace(/\s+/g, '');
+    
+    // Build imports based on features
+    let imports = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
-    // Add feature-specific code
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";`;
+
+    if (features.includes('pausable')) {
+      imports += `\nimport "@openzeppelin/contracts/security/Pausable.sol";`;
+    }
+
+    // Build contract inheritance
+    let inheritance = 'ERC20, Ownable';
+    if (features.includes('pausable')) {
+      inheritance += ', Pausable';
+    }
+
+    // Start building the contract
+    let contractBody = '';
+    
+    // Add feature-specific state variables
     features.forEach(feature => {
-      if (this.templates[feature as keyof ContractTemplate]) {
-        let featureCode = this.templates[feature as keyof ContractTemplate];
+      if (feature === 'tax' && featureConfig.tax) {
+        const taxRecipient = featureConfig.tax.recipient || 'msg.sender';
+        const recipientValue = taxRecipient.startsWith('0x') ? taxRecipient : 'msg.sender';
+        contractBody += `
+    uint256 public taxPercentage = ${featureConfig.tax.percentage || '5'};
+    address public taxRecipient = ${recipientValue};`;
+      }
+      
+      if (feature === 'antiwhale' && featureConfig.antiwhale) {
+        const totalSupply = BigInt(initialSupply) * BigInt(10 ** decimals);
+        const maxTx = (totalSupply * BigInt(featureConfig.antiwhale.maxTransaction || 1)) / BigInt(100);
+        const maxWallet = (totalSupply * BigInt(featureConfig.antiwhale.maxWallet || 2)) / BigInt(100);
         
-        // Replace feature-specific placeholders
-        if (feature === 'tax' && featureConfig.tax) {
-          featureCode = featureCode
-            .replace('{{TAX_PERCENTAGE}}', featureConfig.tax.percentage || '5')
-            .replace('{{TAX_RECIPIENT}}', featureConfig.tax.recipient || 'msg.sender');
-        }
-        
-        if (feature === 'antiwhale' && featureConfig.antiwhale) {
-          const totalSupply = BigInt(initialSupply) * BigInt(10 ** decimals);
-          const maxTx = (totalSupply * BigInt(featureConfig.antiwhale.maxTransaction || 1)) / BigInt(100);
-          const maxWallet = (totalSupply * BigInt(featureConfig.antiwhale.maxWallet || 2)) / BigInt(100);
-          
-          featureCode = featureCode
-            .replace('{{MAX_TRANSACTION_AMOUNT}}', maxTx.toString())
-            .replace('{{MAX_WALLET_AMOUNT}}', maxWallet.toString());
-        }
-        
-        if (feature === 'maxsupply' && featureConfig.maxsupply) {
-          featureCode = featureCode.replace('{{MAX_SUPPLY}}', featureConfig.maxsupply.maxSupply || initialSupply);
-        }
-        
-        contractCode += '\n\n' + featureCode;
+        contractBody += `
+    uint256 public maxTransactionAmount = ${maxTx.toString()};
+    uint256 public maxWalletAmount = ${maxWallet.toString()};`;
+      }
+      
+      if (feature === 'maxsupply' && featureConfig.maxsupply) {
+        contractBody += `
+    uint256 public maxSupply = ${featureConfig.maxsupply.maxSupply || initialSupply};`;
+      }
+      
+      if (feature === 'blacklist') {
+        contractBody += `
+    mapping(address => bool) private _blacklisted;
+    
+    event Blacklisted(address indexed account);
+    event Unblacklisted(address indexed account);`;
       }
     });
 
-    return contractCode;
+    // Add constructor
+    contractBody += `
+
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint256 initialSupply,
+        uint8 decimals
+    ) ERC20(name, symbol) {
+        _mint(msg.sender, initialSupply * 10**decimals);
+    }`;
+
+    // Add standard functions
+    contractBody += `
+
+    function mint(address to, uint256 amount) public onlyOwner {`;
+    
+    if (features.includes('maxsupply')) {
+      contractBody += `
+        require(totalSupply() + amount <= maxSupply, "Minting would exceed max supply");`;
+    }
+    
+    contractBody += `
+        _mint(to, amount);
+    }
+
+    function burn(uint256 amount) public {
+        _burn(msg.sender, amount);
+    }
+
+    function burnFrom(address account, uint256 amount) public {
+        _spendAllowance(account, msg.sender, amount);
+        _burn(account, amount);
+    }`;
+
+    // Add feature-specific functions
+    features.forEach(feature => {
+      if (feature === 'pausable') {
+        contractBody += `
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }`;
+      }
+      
+      if (feature === 'tax') {
+        contractBody += `
+
+    function setTaxPercentage(uint256 _taxPercentage) public onlyOwner {
+        require(_taxPercentage <= 25, "Tax cannot exceed 25%");
+        taxPercentage = _taxPercentage;
+    }
+
+    function setTaxRecipient(address _taxRecipient) public onlyOwner {
+        taxRecipient = _taxRecipient;
+    }`;
+      }
+      
+      if (feature === 'blacklist') {
+        contractBody += `
+
+    function blacklist(address account) public onlyOwner {
+        _blacklisted[account] = true;
+        emit Blacklisted(account);
+    }
+
+    function unblacklist(address account) public onlyOwner {
+        _blacklisted[account] = false;
+        emit Unblacklisted(account);
+    }
+
+    function isBlacklisted(address account) public view returns (bool) {
+        return _blacklisted[account];
+    }`;
+      }
+      
+      if (feature === 'maxsupply') {
+        contractBody += `
+
+    function setMaxSupply(uint256 _maxSupply) public onlyOwner {
+        require(_maxSupply >= totalSupply(), "Max supply cannot be less than current supply");
+        maxSupply = _maxSupply;
+    }`;
+      }
+    });
+
+    // Add override functions based on features
+    const needsTransferOverride = features.includes('tax') || features.includes('antiwhale');
+    const needsBeforeTransferOverride = features.includes('blacklist') || features.includes('pausable');
+
+    if (needsTransferOverride) {
+      contractBody += `
+
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override {`;
+      
+      if (features.includes('tax')) {
+        contractBody += `
+        if (from != owner() && to != owner() && taxPercentage > 0) {
+            uint256 taxAmount = (amount * taxPercentage) / 100;
+            uint256 transferAmount = amount - taxAmount;
+            
+            super._transfer(from, taxRecipient, taxAmount);
+            super._transfer(from, to, transferAmount);
+            return;
+        }`;
+      }
+      
+      if (features.includes('antiwhale')) {
+        contractBody += `
+        
+        if (from != owner() && to != owner()) {
+            require(amount <= maxTransactionAmount, "Transfer amount exceeds maximum transaction amount");
+            
+            if (to != address(this)) {
+                require(balanceOf(to) + amount <= maxWalletAmount, "Recipient would exceed max wallet amount");
+            }
+        }`;
+      }
+      
+      contractBody += `
+        
+        super._transfer(from, to, amount);
+    }`;
+    }
+
+    if (needsBeforeTransferOverride) {
+      contractBody += `
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override`;
+      
+      if (features.includes('pausable')) {
+        contractBody += ` whenNotPaused`;
+      }
+      
+      contractBody += ` {`;
+      
+      if (features.includes('blacklist')) {
+        contractBody += `
+        require(!_blacklisted[from], "Sender is blacklisted");
+        require(!_blacklisted[to], "Recipient is blacklisted");`;
+      }
+      
+      contractBody += `
+        super._beforeTokenTransfer(from, to, amount);
+    }`;
+    }
+
+    // Close the contract
+    contractBody += `
+}`;
+
+    // Combine everything
+    return `${imports}
+
+contract ${tokenName} is ${inheritance} {${contractBody}`;
   }
 
   getVerificationInstructions(contractAddress: string, constructorArgs: string[]): string {

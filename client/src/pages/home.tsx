@@ -133,7 +133,7 @@ export default function Home() {
           
           // Initiate payment through web3Service
           const { web3Service } = await import("@/lib/web3");
-          const paymentTxHash = await web3Service.payDeploymentFee(result.totalCost * 0.01); // Convert POL to MATIC (1 POL = 0.01 MATIC)
+          const paymentTxHash = await web3Service.payDeploymentFee(result.totalCost); // totalCost is already in POL
           
           toast({
             title: "Payment Transaction Sent",
