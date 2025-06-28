@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Zap, Code, Network, Box, Settings, Trophy } from "lucide-react";
 import { Link } from "wouter";
@@ -484,10 +485,28 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2 text-gray-300 text-sm">
-                <li><a href="#" className="hover:text-accent transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">Tutorial Videos</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">Community Discord</a></li>
-                <li><a href="#" className="hover:text-accent transition-colors">Contact Support</a></li>
+                <li><a href="https://t.me/+hrP23f7XcBdiOTRl" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Community Telegram</a></li>
+                <li>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button className="hover:text-accent transition-colors text-left">Contact Support</button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <div className="text-sm">
+                          <p className="mb-2">Get support from telegram:</p>
+                          <a href="https://t.me/+hrP23f7XcBdiOTRl" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 break-all">
+                            https://t.me/+hrP23f7XcBdiOTRl
+                          </a>
+                          <p className="mt-2 mb-1">or just drop an email at:</p>
+                          <a href="mailto:hreela@gmail.com" className="text-blue-400 hover:text-blue-300">
+                            hreela@gmail.com
+                          </a>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </li>
               </ul>
             </div>
           </div>
