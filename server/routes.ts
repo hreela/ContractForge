@@ -3,11 +3,16 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { contractGenerator } from "./services/contractGenerator";
 import { pdfGenerator } from "./services/pdfGenerator";
-import { deploymentSchema } from "@shared/schema";
+import { deploymentSchema, updateFeaturePricingSchema } from "@shared/schema";
 import { StorageContract } from "./storage";
 import { z } from "zod";
 
 const OWNER_WALLET = "0xE29BD5797Bde889ab2a12A631E80821f30fB716a";
+
+// Admin authentication - in production, this should be more secure
+const isAdmin = (address: string): boolean => {
+  return address.toLowerCase() === OWNER_WALLET.toLowerCase();
+};
 
 const FEATURE_PRICES = {
   pausable: 5,
@@ -35,10 +40,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data.featureConfig
       );
 
-      // Calculate total cost
+      // Calculate total cost using dynamic pricing
       const baseCost = 5;
+      const pricing = await storage.getActiveFeaturePricing();
+      const featurePrices = pricing.reduce((acc, p) => {
+        acc[p.featureName] = p.price;
+        return acc;
+      }, {} as Record<string, number>);
+      
       const featureCost = data.features.reduce((sum, feature) => {
-        return sum + (FEATURE_PRICES[feature as keyof typeof FEATURE_PRICES] || 0);
+        return sum + (featurePrices[feature] || FEATURE_PRICES[feature as keyof typeof FEATURE_PRICES] || 0);
       }, 0);
       const totalCost = baseCost + featureCost;
       const isOwnerDeployment = data.deployerAddress.toLowerCase() === OWNER_WALLET.toLowerCase();
@@ -224,13 +235,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get feature pricing
-  app.get("/api/feature-prices", (req, res) => {
-    res.json({
-      baseCost: 5,
-      features: FEATURE_PRICES,
-      ownerWallet: OWNER_WALLET,
-    });
+  // Get feature pricing (updated to use dynamic pricing)
+  app.get("/api/feature-prices", async (req, res) => {
+    try {
+      const pricing = await storage.getActiveFeaturePricing();
+      const featurePrices = pricing.reduce((acc, p) => {
+        acc[p.featureName] = p.price;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      res.json({
+        baseCost: 5,
+        features: featurePrices,
+        ownerWallet: OWNER_WALLET,
+      });
+    } catch (error) {
+      // Fallback to hardcoded prices if database fails
+      res.json({
+        baseCost: 5,
+        features: FEATURE_PRICES,
+        ownerWallet: OWNER_WALLET,
+      });
+    }
+  });
+
+  // Admin: Get all feature pricing including inactive
+  app.get("/api/admin/features/pricing", async (req, res) => {
+    try {
+      const adminAddress = req.headers['x-admin-address'] as string;
+      if (!adminAddress || !isAdmin(adminAddress)) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const pricing = await storage.getAllFeaturePricing();
+      res.json(pricing);
+    } catch (error) {
+      console.error("Error fetching admin feature pricing:", error);
+      res.status(500).json({ error: "Failed to fetch feature pricing" });
+    }
+  });
+
+  // Admin: Update feature pricing
+  app.put("/api/admin/features/:featureName/pricing", async (req, res) => {
+    try {
+      const adminAddress = req.headers['x-admin-address'] as string;
+      if (!adminAddress || !isAdmin(adminAddress)) {
+        return res.status(403).json({ error: "Admin access required" });
+      }
+
+      const featureName = req.params.featureName;
+      const updates = updateFeaturePricingSchema.parse(req.body);
+
+      const updated = await storage.updateFeaturePricing(featureName, updates, adminAddress);
+      
+      if (!updated) {
+        return res.status(404).json({ error: "Feature not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid request data", details: error.errors });
+      }
+      console.error("Error updating feature pricing:", error);
+      res.status(500).json({ error: "Failed to update feature pricing" });
+    }
   });
 
   const httpServer = createServer(app);

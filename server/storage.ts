@@ -22,6 +22,16 @@ export interface StorageContractFeature {
   featureConfig: string | null;
 }
 
+export interface StorageFeaturePricing {
+  id: number;
+  featureName: string;
+  price: number;
+  description: string;
+  isActive: boolean;
+  updatedAt: Date;
+  updatedBy: string | null;
+}
+
 export interface IStorage {
   // Contract operations
   createContract(contract: Omit<StorageContract, 'id' | 'createdAt' | 'deployedAt'>): Promise<StorageContract>;
@@ -33,19 +43,59 @@ export interface IStorage {
   // Contract feature operations
   createContractFeature(feature: Omit<StorageContractFeature, 'id'>): Promise<StorageContractFeature>;
   getContractFeatures(contractId: number): Promise<StorageContractFeature[]>;
+  
+  // Feature pricing operations
+  createFeaturePricing(pricing: Omit<StorageFeaturePricing, 'id' | 'updatedAt'>): Promise<StorageFeaturePricing>;
+  updateFeaturePricing(featureName: string, updates: Partial<Omit<StorageFeaturePricing, 'id' | 'featureName' | 'updatedAt'>>, updatedBy: string): Promise<StorageFeaturePricing | undefined>;
+  getFeaturePricing(featureName: string): Promise<StorageFeaturePricing | undefined>;
+  getAllFeaturePricing(): Promise<StorageFeaturePricing[]>;
+  getActiveFeaturePricing(): Promise<StorageFeaturePricing[]>;
 }
 
 export class MemStorage implements IStorage {
   private contracts: Map<number, StorageContract>;
   private contractFeatures: Map<number, StorageContractFeature>;
+  private featurePricing: Map<string, StorageFeaturePricing>;
   private currentContractId: number;
   private currentFeatureId: number;
+  private currentPricingId: number;
 
   constructor() {
     this.contracts = new Map();
     this.contractFeatures = new Map();
+    this.featurePricing = new Map();
     this.currentContractId = 1;
     this.currentFeatureId = 1;
+    this.currentPricingId = 1;
+    
+    // Initialize default feature pricing
+    this.initializeDefaultPricing();
+  }
+  
+  private initializeDefaultPricing() {
+    const defaultFeatures = [
+      { name: "pausable", price: 5, description: "Ability to pause/unpause contract operations" },
+      { name: "tax", price: 10, description: "Automatic tax collection on token transfers" },
+      { name: "reflection", price: 10, description: "Automatic reward distribution to holders" },
+      { name: "antiwhale", price: 20, description: "Maximum transaction and wallet limits" },
+      { name: "blacklist", price: 10, description: "Block specific addresses from transfers" },
+      { name: "maxsupply", price: 5, description: "Set maximum token supply limit" },
+      { name: "timelock", price: 25, description: "Time-delayed execution of admin functions" },
+      { name: "governance", price: 35, description: "Voting and proposal system for token holders" },
+    ];
+    
+    defaultFeatures.forEach(feature => {
+      const pricing: StorageFeaturePricing = {
+        id: this.currentPricingId++,
+        featureName: feature.name,
+        price: feature.price,
+        description: feature.description,
+        isActive: true,
+        updatedAt: new Date(),
+        updatedBy: null,
+      };
+      this.featurePricing.set(feature.name, pricing);
+    });
   }
 
   async createContract(contractData: Omit<StorageContract, 'id' | 'createdAt' | 'deployedAt'>): Promise<StorageContract> {
@@ -99,6 +149,49 @@ export class MemStorage implements IStorage {
     return Array.from(this.contractFeatures.values()).filter(
       (feature) => feature.contractId === contractId
     );
+  }
+  
+  // Feature pricing operations
+  async createFeaturePricing(pricingData: Omit<StorageFeaturePricing, 'id' | 'updatedAt'>): Promise<StorageFeaturePricing> {
+    const pricing: StorageFeaturePricing = {
+      id: this.currentPricingId++,
+      ...pricingData,
+      updatedAt: new Date(),
+    };
+    
+    this.featurePricing.set(pricing.featureName, pricing);
+    return pricing;
+  }
+  
+  async updateFeaturePricing(
+    featureName: string, 
+    updates: Partial<Omit<StorageFeaturePricing, 'id' | 'featureName' | 'updatedAt'>>, 
+    updatedBy: string
+  ): Promise<StorageFeaturePricing | undefined> {
+    const existing = this.featurePricing.get(featureName);
+    if (!existing) return undefined;
+    
+    const updated: StorageFeaturePricing = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date(),
+      updatedBy,
+    };
+    
+    this.featurePricing.set(featureName, updated);
+    return updated;
+  }
+  
+  async getFeaturePricing(featureName: string): Promise<StorageFeaturePricing | undefined> {
+    return this.featurePricing.get(featureName);
+  }
+  
+  async getAllFeaturePricing(): Promise<StorageFeaturePricing[]> {
+    return Array.from(this.featurePricing.values());
+  }
+  
+  async getActiveFeaturePricing(): Promise<StorageFeaturePricing[]> {
+    return Array.from(this.featurePricing.values()).filter(pricing => pricing.isActive);
   }
 }
 

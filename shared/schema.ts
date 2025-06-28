@@ -26,6 +26,16 @@ export const contractFeatures = pgTable("contract_features", {
   featureConfig: text("feature_config"), // JSON string for feature-specific config
 });
 
+export const featurePricing = pgTable("feature_pricing", {
+  id: serial("id").primaryKey(),
+  featureName: text("feature_name").notNull().unique(),
+  price: integer("price").notNull(),
+  description: text("description").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: text("updated_by"), // admin address who updated
+});
+
 export const insertContractSchema = createInsertSchema(contracts).omit({
   id: true,
   createdAt: true,
@@ -36,10 +46,24 @@ export const insertContractFeatureSchema = createInsertSchema(contractFeatures).
   id: true,
 });
 
+export const insertFeaturePricingSchema = createInsertSchema(featurePricing).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const updateFeaturePricingSchema = createInsertSchema(featurePricing).omit({
+  id: true,
+  featureName: true,
+  updatedAt: true,
+}).partial();
+
 export type InsertContract = z.infer<typeof insertContractSchema>;
 export type Contract = typeof contracts.$inferSelect;
 export type InsertContractFeature = z.infer<typeof insertContractFeatureSchema>;
 export type ContractFeature = typeof contractFeatures.$inferSelect;
+export type InsertFeaturePricing = z.infer<typeof insertFeaturePricingSchema>;
+export type FeaturePricing = typeof featurePricing.$inferSelect;
+export type UpdateFeaturePricing = z.infer<typeof updateFeaturePricingSchema>;
 
 // Web3 types
 export const deploymentSchema = z.object({

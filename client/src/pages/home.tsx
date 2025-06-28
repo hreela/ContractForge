@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Zap, Code, Network, Box } from "lucide-react";
+import { Shield, Zap, Code, Network, Box, Settings } from "lucide-react";
+import { Link } from "wouter";
+import { useWallet } from "@/contexts/WalletContext";
 import WalletConnection from "@/components/wallet-connection";
 import FeatureSelector from "@/components/feature-selector";
 import DeploymentModal from "@/components/deployment-modal";
@@ -14,11 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { CONTRACT_FEATURES } from "@/lib/constants";
 
 export default function Home() {
-  const [walletState, setWalletState] = useState({
-    isConnected: false,
-    address: "",
-    isOwner: false,
-  });
+  const { walletState, setWalletState } = useWallet();
   
   const [tokenConfig, setTokenConfig] = useState<TokenConfig>({
     name: "",
@@ -196,7 +194,17 @@ export default function Home() {
               </div>
             </div>
             
-            <WalletConnection onConnectionChange={handleWalletConnection} />
+            <div className="flex items-center space-x-4">
+              {walletState.isOwner && (
+                <Link href="/admin">
+                  <Button variant="outline" size="sm" className="border-accent text-accent hover:bg-accent hover:text-dark">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Admin Panel
+                  </Button>
+                </Link>
+              )}
+              <WalletConnection onConnectionChange={handleWalletConnection} />
+            </div>
           </div>
         </div>
       </nav>

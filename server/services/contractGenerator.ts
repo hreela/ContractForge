@@ -566,10 +566,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";`;
     if (features.includes('timelock') && featureConfig.timelock) {
       const delayInSeconds = (featureConfig.timelock.delay || 24) * 3600; // Convert hours to seconds
       const proposers = featureConfig.timelock.proposers?.length ? 
-        `[${featureConfig.timelock.proposers.map(addr => `address(${addr})`).join(', ')}]` : 
+        `[${featureConfig.timelock.proposers.map((addr: string) => `address(${addr})`).join(', ')}]` : 
         'new address[](0)';
       const executors = featureConfig.timelock.executors?.length ? 
-        `[${featureConfig.timelock.executors.map(addr => `address(${addr})`).join(', ')}]` : 
+        `[${featureConfig.timelock.executors.map((addr: string) => `address(${addr})`).join(', ')}]` : 
         'new address[](0)';
         
       additionalContracts += `
