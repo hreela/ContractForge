@@ -9,11 +9,7 @@ import { z } from "zod";
 
 const OWNER_WALLET = "0xE29BD5797Bde889ab2a12A631E80821f30fB716a";
 
-// Admin authentication - in production, this should be more secure
-const isAdmin = (address: string): boolean => {
-  return address.toLowerCase() === OWNER_WALLET.toLowerCase();
-};
-
+// Fallback pricing if database fails  
 const FEATURE_PRICES = {
   pausable: 5,
   tax: 10,
@@ -23,6 +19,11 @@ const FEATURE_PRICES = {
   maxsupply: 5,
   timelock: 25,
   governance: 35,
+};
+
+// Admin authentication - in production, this should be more secure
+const isAdmin = (address: string): boolean => {
+  return address.toLowerCase() === OWNER_WALLET.toLowerCase();
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -43,15 +44,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate total cost using dynamic pricing
       const baseCost = 5;
       const pricing = await storage.getActiveFeaturePricing();
+      console.log("Dynamic pricing retrieved:", pricing);
+      
       const featurePrices = pricing.reduce((acc, p) => {
         acc[p.featureName] = p.price;
         return acc;
       }, {} as Record<string, number>);
       
+      console.log("Feature prices map:", featurePrices);
+      console.log("Selected features:", data.features);
+      
       const featureCost = data.features.reduce((sum, feature) => {
-        return sum + (featurePrices[feature] || FEATURE_PRICES[feature as keyof typeof FEATURE_PRICES] || 0);
+        const dynamicPrice = featurePrices[feature];
+        const fallbackPrice = FEATURE_PRICES[feature as keyof typeof FEATURE_PRICES];
+        const finalPrice = dynamicPrice !== undefined ? dynamicPrice : (fallbackPrice || 0);
+        console.log(`Feature ${feature}: dynamic=${dynamicPrice}, fallback=${fallbackPrice}, final=${finalPrice}`);
+        return sum + finalPrice;
       }, 0);
       const totalCost = baseCost + featureCost;
+      console.log("Total cost calculated:", totalCost);
       const isOwnerDeployment = data.deployerAddress.toLowerCase() === OWNER_WALLET.toLowerCase();
 
       // Create contract record
@@ -238,11 +249,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get feature pricing (updated to use dynamic pricing)
   app.get("/api/feature-prices", async (req, res) => {
     try {
+      console.log("Fetching active feature pricing...");
       const pricing = await storage.getActiveFeaturePricing();
+      console.log("Active pricing from database:", pricing);
+      
       const featurePrices = pricing.reduce((acc, p) => {
         acc[p.featureName] = p.price;
         return acc;
       }, {} as Record<string, number>);
+      
+      console.log("Processed feature prices:", featurePrices);
       
       res.json({
         baseCost: 5,
@@ -250,6 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ownerWallet: OWNER_WALLET,
       });
     } catch (error) {
+      console.error("Error fetching dynamic pricing, falling back to hardcoded:", error);
       // Fallback to hardcoded prices if database fails
       res.json({
         baseCost: 5,

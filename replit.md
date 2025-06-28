@@ -88,8 +88,19 @@ The application follows a modern full-stack architecture with clear separation b
 - **Web3 Integration**: MetaMask connection with automatic network switching
 - **Documentation**: Automated PDF generation for deployed contracts
 
+## Recent Changes
+- **June 28, 2025**: Successfully implemented dynamic platform fee management system
+  - Added database-driven feature pricing with admin panel control
+  - Created comprehensive admin interface at `/admin` route with real-time pricing updates
+  - Implemented owner wallet authentication for admin access (0xE29BD5797Bde889ab2a12A631E80821f30fB716a)
+  - Integrated wallet context for proper state management across components
+  - Added dynamic pricing calculation in contract generation with database fallback
+  - Verified fee updates are immediately reflected in contract costs
+  - Added audit trail tracking who updated pricing and when
+
 ## Changelog
 - June 27, 2025. Initial setup
+- June 28, 2025. Dynamic pricing system fully operational
 
 ## User Preferences
 
