@@ -27,21 +27,32 @@ export default function WalletConnection({ onConnectionChange }: WalletConnectio
   }, []);
 
   const checkConnection = async () => {
-    if (web3Service.isConnected()) {
-      // Get current account if already connected
-      try {
-        const accounts = await window.ethereum?.request({ method: "eth_accounts" });
+    try {
+      // Check if MetaMask is available
+      if (!window.ethereum) {
+        console.log("MetaMask not detected");
+        return;
+      }
+
+      if (web3Service.isConnected()) {
+        // Get current account if already connected
+        const accounts = await window.ethereum.request({ method: "eth_accounts" });
+        console.log("Existing accounts found:", accounts);
+        
         if (accounts && accounts.length > 0) {
           const userAddress = accounts[0];
           const isOwnerWallet = userAddress.toLowerCase() === OWNER_WALLET.toLowerCase();
+          
+          console.log("Auto-connecting to existing account:", userAddress);
+          
           setAddress(userAddress);
           setIsOwner(isOwnerWallet);
           setIsConnected(true);
           onConnectionChange(true, userAddress, isOwnerWallet);
         }
-      } catch (error) {
-        console.error("Error checking connection:", error);
       }
+    } catch (error) {
+      console.error("Error checking connection:", error);
     }
   };
 
