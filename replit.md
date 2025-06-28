@@ -103,6 +103,17 @@ The application follows a modern full-stack architecture with clear separation b
 ## Changelog
 - June 27, 2025. Initial setup
 - June 28, 2025. Dynamic pricing system fully operational
+- June 28, 2025. Updated feature pricing structure:
+  - Base deployment fee: 20 POL (was 5 POL)
+  - Pausable: 30 POL (was 5 POL)
+  - Tax: 40 POL (was 10 POL)
+  - Reflection: 50 POL (was 10 POL)
+  - Blacklist: 40 POL (was 10 POL)
+  - Anti-whale: 60 POL (was 20 POL)
+  - Timelock: 125 POL (was 25 POL)
+  - Governance: 180 POL (was 35 POL)
+  - Max Supply: 25 POL (was 5 POL)
+  - Volume Trader achievement threshold: 500 POL (was 100 POL)
 
 ## User Preferences
 

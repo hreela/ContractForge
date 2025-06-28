@@ -6,14 +6,14 @@ export const POLYGON_RPC_URL = "https://polygon-rpc.com";
 export const CONTRACT_FEATURES = [
   {
     name: "pausable",
-    price: 5,
+    price: 30,
     description: "Ability to pause/unpause contract operations",
     icon: "pause",
     color: "orange",
   },
   {
     name: "tax",
-    price: 10,
+    price: 40,
     description: "Automatic tax collection on token transfers",
     icon: "percentage",
     color: "yellow",
@@ -21,14 +21,14 @@ export const CONTRACT_FEATURES = [
   },
   {
     name: "reflection",
-    price: 10,
+    price: 50,
     description: "Automatic reward distribution to holders",
     icon: "reflect",
     color: "blue",
   },
   {
     name: "antiwhale",
-    price: 20,
+    price: 60,
     description: "Maximum transaction and wallet limits",
     icon: "shield",
     color: "red",
@@ -36,14 +36,14 @@ export const CONTRACT_FEATURES = [
   },
   {
     name: "blacklist",
-    price: 10,
+    price: 40,
     description: "Block specific addresses from transfers",
     icon: "ban",
     color: "gray",
   },
   {
     name: "maxsupply",
-    price: 5,
+    price: 25,
     description: "Set maximum token supply limit",
     icon: "infinity",
     color: "purple",
@@ -51,7 +51,7 @@ export const CONTRACT_FEATURES = [
   },
   {
     name: "timelock",
-    price: 25,
+    price: 125,
     description: "Time-delayed execution of admin functions",
     icon: "clock",
     color: "indigo",
@@ -59,7 +59,7 @@ export const CONTRACT_FEATURES = [
   },
   {
     name: "governance",
-    price: 35,
+    price: 180,
     description: "Voting and proposal system for token holders",
     icon: "vote-yea",
     color: "green",

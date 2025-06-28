@@ -115,14 +115,14 @@ export class MemStorage implements IStorage {
   
   private initializeDefaultPricing() {
     const defaultFeatures = [
-      { name: "pausable", price: 5, description: "Ability to pause/unpause contract operations" },
-      { name: "tax", price: 10, description: "Automatic tax collection on token transfers" },
-      { name: "reflection", price: 10, description: "Automatic reward distribution to holders" },
-      { name: "antiwhale", price: 20, description: "Maximum transaction and wallet limits" },
-      { name: "blacklist", price: 10, description: "Block specific addresses from transfers" },
-      { name: "maxsupply", price: 5, description: "Set maximum token supply limit" },
-      { name: "timelock", price: 25, description: "Time-delayed execution of admin functions" },
-      { name: "governance", price: 35, description: "Voting and proposal system for token holders" },
+      { name: "pausable", price: 30, description: "Ability to pause/unpause contract operations" },
+      { name: "tax", price: 40, description: "Automatic tax collection on token transfers" },
+      { name: "reflection", price: 50, description: "Automatic reward distribution to holders" },
+      { name: "antiwhale", price: 60, description: "Maximum transaction and wallet limits" },
+      { name: "blacklist", price: 40, description: "Block specific addresses from transfers" },
+      { name: "maxsupply", price: 25, description: "Set maximum token supply limit" },
+      { name: "timelock", price: 125, description: "Time-delayed execution of admin functions" },
+      { name: "governance", price: 180, description: "Voting and proposal system for token holders" },
     ];
     
     defaultFeatures.forEach(feature => {
@@ -290,11 +290,11 @@ export class MemStorage implements IStorage {
       {
         badgeId: "volume-trader",
         name: "Volume Trader",
-        description: "Deploy contracts worth 100+ POL in total",
+        description: "Deploy contracts worth 500+ POL in total",
         icon: "💎",
         color: "bg-indigo-500",
         category: "volume",
-        requirement: JSON.stringify({ type: "total_spent", value: 100 }),
+        requirement: JSON.stringify({ type: "total_spent", value: 500 }),
         isActive: true,
       },
     ];

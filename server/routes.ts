@@ -42,7 +42,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       // Calculate total cost using dynamic pricing
-      const baseCost = 5;
+      const baseCost = 20;
       const pricing = await storage.getActiveFeaturePricing();
       console.log("Dynamic pricing retrieved:", pricing);
       

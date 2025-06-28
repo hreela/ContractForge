@@ -437,7 +437,7 @@ export default function FeatureSelector({
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Base Platform Fee</span>
               <span className={`text-white font-semibold ${isOwner ? 'line-through opacity-50' : ''}`}>
-                $5 POL
+                $20 POL
               </span>
             </div>
             
