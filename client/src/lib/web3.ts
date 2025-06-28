@@ -31,9 +31,37 @@ export class Web3Service {
       await this.switchToPolygon();
       console.log("Web3Service: Network switch completed");
       
+      // Wait a bit for network to stabilize after switch
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       console.log("Web3Service: Getting signer");
-      this.signer = await this.provider.getSigner();
-      console.log("Web3Service: Signer obtained");
+      
+      // Try to get signer with timeout and retry logic
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts) {
+        try {
+          attempts++;
+          console.log(`Web3Service: Signer attempt ${attempts}/${maxAttempts}`);
+          
+          const signerPromise = this.provider.getSigner();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("Signer acquisition timeout")), 8000)
+          );
+          
+          this.signer = await Promise.race([signerPromise, timeoutPromise]) as ethers.JsonRpcSigner;
+          console.log("Web3Service: Signer obtained");
+          break;
+        } catch (error) {
+          console.log(`Web3Service: Signer attempt ${attempts} failed:`, error);
+          if (attempts === maxAttempts) {
+            throw new Error(`Failed to get signer after ${maxAttempts} attempts: ${error.message}`);
+          }
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
       
       console.log("Web3Service: Getting address");
       const address = await this.signer.getAddress();
