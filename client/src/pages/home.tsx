@@ -164,7 +164,7 @@ export default function Home() {
         try {
           toast({
             title: "Processing Payment",
-            description: `Requesting payment of $${result.totalCost} POL. Please confirm in MetaMask...`,
+            description: `Requesting payment of ${result.totalCost} POL. Please confirm in MetaMask...`,
           });
           
           // Initiate payment through web3Service
@@ -416,8 +416,8 @@ export default function Home() {
                       ? "Processing..." 
                       : walletState.isOwner 
                         ? "Deploy Free (Admin)" 
-                        : `Deploy ($${(() => {
-                            const baseCost = 5;
+                        : `Deploy (${(() => {
+                            const baseCost = 20;
                             const featureCost = selectedFeatures.reduce((sum, feature) => {
                               return sum + (CONTRACT_FEATURES.find(f => f.name === feature)?.price || 0);
                             }, 0);
