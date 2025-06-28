@@ -54,9 +54,10 @@ export class Web3Service {
           console.log("Web3Service: Signer obtained");
           break;
         } catch (error) {
-          console.log(`Web3Service: Signer attempt ${attempts} failed:`, error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log(`Web3Service: Signer attempt ${attempts} failed:`, errorMessage);
           if (attempts === maxAttempts) {
-            throw new Error(`Failed to get signer after ${maxAttempts} attempts: ${error.message}`);
+            throw new Error(`Failed to get signer after ${maxAttempts} attempts: ${errorMessage}`);
           }
           // Wait before retry
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -64,6 +65,9 @@ export class Web3Service {
       }
       
       console.log("Web3Service: Getting address");
+      if (!this.signer) {
+        throw new Error("Signer not available");
+      }
       const address = await this.signer.getAddress();
       console.log("Web3Service: Address obtained:", address);
       
