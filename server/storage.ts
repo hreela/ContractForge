@@ -32,6 +32,27 @@ export interface StorageFeaturePricing {
   updatedBy: string | null;
 }
 
+export interface StorageAchievement {
+  id: number;
+  badgeId: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  category: string;
+  requirement: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface StorageUserAchievement {
+  id: number;
+  userAddress: string;
+  badgeId: string;
+  unlockedAt: Date;
+  contractId: number | null;
+}
+
 export interface IStorage {
   // Contract operations
   createContract(contract: Omit<StorageContract, 'id' | 'createdAt' | 'deployedAt'>): Promise<StorageContract>;
@@ -50,26 +71,46 @@ export interface IStorage {
   getFeaturePricing(featureName: string): Promise<StorageFeaturePricing | undefined>;
   getAllFeaturePricing(): Promise<StorageFeaturePricing[]>;
   getActiveFeaturePricing(): Promise<StorageFeaturePricing[]>;
+
+  // Achievement operations
+  createAchievement(achievement: Omit<StorageAchievement, 'id' | 'createdAt'>): Promise<StorageAchievement>;
+  getAchievements(): Promise<StorageAchievement[]>;
+  getActiveAchievements(): Promise<StorageAchievement[]>;
+  
+  // User achievement operations
+  createUserAchievement(userAchievement: Omit<StorageUserAchievement, 'id' | 'unlockedAt'>): Promise<StorageUserAchievement>;
+  getUserAchievements(userAddress: string): Promise<StorageUserAchievement[]>;
+  checkAndUnlockAchievements(userAddress: string, contractId?: number): Promise<StorageUserAchievement[]>;
+  hasUserAchievement(userAddress: string, badgeId: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private contracts: Map<number, StorageContract>;
   private contractFeatures: Map<number, StorageContractFeature>;
   private featurePricing: Map<string, StorageFeaturePricing>;
+  private achievements: Map<string, StorageAchievement>;
+  private userAchievements: Map<string, StorageUserAchievement[]>;
   private currentContractId: number;
   private currentFeatureId: number;
   private currentPricingId: number;
+  private currentAchievementId: number;
+  private currentUserAchievementId: number;
 
   constructor() {
     this.contracts = new Map();
     this.contractFeatures = new Map();
     this.featurePricing = new Map();
+    this.achievements = new Map();
+    this.userAchievements = new Map();
     this.currentContractId = 1;
     this.currentFeatureId = 1;
     this.currentPricingId = 1;
+    this.currentAchievementId = 1;
+    this.currentUserAchievementId = 1;
     
     // Initialize default feature pricing
     this.initializeDefaultPricing();
+    this.initializeDefaultAchievements();
   }
   
   private initializeDefaultPricing() {
@@ -192,6 +233,176 @@ export class MemStorage implements IStorage {
   
   async getActiveFeaturePricing(): Promise<StorageFeaturePricing[]> {
     return Array.from(this.featurePricing.values()).filter(pricing => pricing.isActive);
+  }
+
+  private initializeDefaultAchievements() {
+    const defaultAchievements = [
+      {
+        badgeId: "first-deployment",
+        name: "First Steps",
+        description: "Deploy your first smart contract",
+        icon: "🚀",
+        color: "bg-blue-500",
+        category: "deployment",
+        requirement: JSON.stringify({ type: "contract_count", value: 1 }),
+        isActive: true,
+      },
+      {
+        badgeId: "veteran-deployer",
+        name: "Veteran Deployer",
+        description: "Deploy 10 smart contracts",
+        icon: "⭐",
+        color: "bg-yellow-500",
+        category: "deployment",
+        requirement: JSON.stringify({ type: "contract_count", value: 10 }),
+        isActive: true,
+      },
+      {
+        badgeId: "feature-explorer",
+        name: "Feature Explorer",
+        description: "Use 5 different features in contracts",
+        icon: "🔬",
+        color: "bg-purple-500",
+        category: "features",
+        requirement: JSON.stringify({ type: "unique_features", value: 5 }),
+        isActive: true,
+      },
+      {
+        badgeId: "governance-master",
+        name: "Governance Master",
+        description: "Deploy a contract with governance features",
+        icon: "🏛️",
+        color: "bg-green-500",
+        category: "features",
+        requirement: JSON.stringify({ type: "has_feature", value: "governance" }),
+        isActive: true,
+      },
+      {
+        badgeId: "whale-protector",
+        name: "Whale Protector",
+        description: "Deploy a contract with anti-whale protection",
+        icon: "🛡️",
+        color: "bg-red-500",
+        category: "features",
+        requirement: JSON.stringify({ type: "has_feature", value: "antiwhale" }),
+        isActive: true,
+      },
+      {
+        badgeId: "volume-trader",
+        name: "Volume Trader",
+        description: "Deploy contracts worth 100+ POL in total",
+        icon: "💎",
+        color: "bg-indigo-500",
+        category: "volume",
+        requirement: JSON.stringify({ type: "total_spent", value: 100 }),
+        isActive: true,
+      },
+    ];
+
+    defaultAchievements.forEach(achievement => {
+      const storedAchievement: StorageAchievement = {
+        id: this.currentAchievementId++,
+        ...achievement,
+        createdAt: new Date(),
+      };
+      this.achievements.set(achievement.badgeId, storedAchievement);
+    });
+  }
+
+  // Achievement operations
+  async createAchievement(achievementData: Omit<StorageAchievement, 'id' | 'createdAt'>): Promise<StorageAchievement> {
+    const achievement: StorageAchievement = {
+      id: this.currentAchievementId++,
+      ...achievementData,
+      createdAt: new Date(),
+    };
+    
+    this.achievements.set(achievement.badgeId, achievement);
+    return achievement;
+  }
+
+  async getAchievements(): Promise<StorageAchievement[]> {
+    return Array.from(this.achievements.values());
+  }
+
+  async getActiveAchievements(): Promise<StorageAchievement[]> {
+    return Array.from(this.achievements.values()).filter(achievement => achievement.isActive);
+  }
+
+  // User achievement operations
+  async createUserAchievement(userAchievementData: Omit<StorageUserAchievement, 'id' | 'unlockedAt'>): Promise<StorageUserAchievement> {
+    const userAchievement: StorageUserAchievement = {
+      id: this.currentUserAchievementId++,
+      ...userAchievementData,
+      unlockedAt: new Date(),
+    };
+    
+    const userAchievements = this.userAchievements.get(userAchievementData.userAddress) || [];
+    userAchievements.push(userAchievement);
+    this.userAchievements.set(userAchievementData.userAddress, userAchievements);
+    
+    return userAchievement;
+  }
+
+  async getUserAchievements(userAddress: string): Promise<StorageUserAchievement[]> {
+    return this.userAchievements.get(userAddress.toLowerCase()) || [];
+  }
+
+  async hasUserAchievement(userAddress: string, badgeId: string): Promise<boolean> {
+    const userAchievements = this.userAchievements.get(userAddress.toLowerCase()) || [];
+    return userAchievements.some(achievement => achievement.badgeId === badgeId);
+  }
+
+  async checkAndUnlockAchievements(userAddress: string, contractId?: number): Promise<StorageUserAchievement[]> {
+    const newAchievements: StorageUserAchievement[] = [];
+    const activeAchievements = await this.getActiveAchievements();
+    const userContracts = await this.getContractsByDeployer(userAddress);
+    
+    for (const achievement of activeAchievements) {
+      // Skip if user already has this achievement
+      if (await this.hasUserAchievement(userAddress, achievement.badgeId)) {
+        continue;
+      }
+      
+      const requirement = JSON.parse(achievement.requirement);
+      let shouldUnlock = false;
+      
+      switch (requirement.type) {
+        case "contract_count":
+          shouldUnlock = userContracts.length >= requirement.value;
+          break;
+          
+        case "unique_features":
+          const uniqueFeatures = new Set();
+          userContracts.forEach(contract => {
+            contract.features.forEach(feature => uniqueFeatures.add(feature));
+          });
+          shouldUnlock = uniqueFeatures.size >= requirement.value;
+          break;
+          
+        case "has_feature":
+          shouldUnlock = userContracts.some(contract => 
+            contract.features.includes(requirement.value)
+          );
+          break;
+          
+        case "total_spent":
+          const totalSpent = userContracts.reduce((sum, contract) => sum + contract.totalCost, 0);
+          shouldUnlock = totalSpent >= requirement.value;
+          break;
+      }
+      
+      if (shouldUnlock) {
+        const newAchievement = await this.createUserAchievement({
+          userAddress: userAddress.toLowerCase(),
+          badgeId: achievement.badgeId,
+          contractId: contractId || null,
+        });
+        newAchievements.push(newAchievement);
+      }
+    }
+    
+    return newAchievements;
   }
 }
 

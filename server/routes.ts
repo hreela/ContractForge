@@ -91,11 +91,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Check for achievements after contract creation
+      const newAchievements = await storage.checkAndUnlockAchievements(data.deployerAddress, contract.id);
+
       res.json({
         contractId: contract.id,
         contractCode,
         totalCost: contract.totalCost,
         isOwnerDeployment,
+        newAchievements,
       });
     } catch (error) {
       console.error("Error generating contract:", error);
@@ -316,6 +320,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error updating feature pricing:", error);
       res.status(500).json({ error: "Failed to update feature pricing" });
+    }
+  });
+
+  // Achievement endpoints
+  app.get("/api/achievements", async (req, res) => {
+    try {
+      const achievements = await storage.getActiveAchievements();
+      res.json(achievements);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+      res.status(500).json({ error: "Failed to fetch achievements" });
+    }
+  });
+
+  app.get("/api/users/:address/achievements", async (req, res) => {
+    try {
+      const userAddress = req.params.address;
+      const userAchievements = await storage.getUserAchievements(userAddress);
+      res.json(userAchievements);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      res.status(500).json({ error: "Failed to fetch user achievements" });
+    }
+  });
+
+  app.post("/api/users/:address/check-achievements", async (req, res) => {
+    try {
+      const userAddress = req.params.address;
+      const { contractId } = req.body;
+      
+      const newAchievements = await storage.checkAndUnlockAchievements(userAddress, contractId);
+      res.json({ newAchievements });
+    } catch (error) {
+      console.error("Error checking achievements:", error);
+      res.status(500).json({ error: "Failed to check achievements" });
     }
   });
 

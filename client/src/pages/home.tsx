@@ -5,15 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Zap, Code, Network, Box, Settings } from "lucide-react";
+import { Shield, Zap, Code, Network, Box, Settings, Trophy } from "lucide-react";
 import { Link } from "wouter";
 import { useWallet } from "@/contexts/WalletContext";
 import WalletConnection from "@/components/wallet-connection";
 import FeatureSelector from "@/components/feature-selector";
 import DeploymentModal from "@/components/deployment-modal";
+import AchievementsPanel from "@/components/achievements-panel";
+import AchievementNotification from "@/components/achievement-notification";
+import AchievementBadge from "@/components/achievement-badge";
 import { TokenConfig, FeatureConfig } from "@/types/contract";
+import { Achievement, UserAchievement, AchievementWithStatus } from "@/types/achievements";
 import { apiRequest } from "@/lib/queryClient";
 import { CONTRACT_FEATURES } from "@/lib/constants";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
   const { walletState, setWalletState } = useWallet();
@@ -36,7 +41,30 @@ export default function Home() {
     deploymentData: null as any,
   });
   
+  const [achievementsPanelOpen, setAchievementsPanelOpen] = useState(false);
+  const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
+  
   const { toast } = useToast();
+
+  // Fetch achievements data
+  const { data: achievements = [] } = useQuery<Achievement[]>({
+    queryKey: ["/api/achievements"],
+    enabled: walletState.isConnected,
+  });
+
+  const { data: userAchievements = [] } = useQuery<UserAchievement[]>({
+    queryKey: ["/api/users", walletState.address, "achievements"],
+    enabled: walletState.isConnected && !!walletState.address,
+  });
+
+  // Get recent achievements for header display
+  const recentAchievements = userAchievements
+    .slice(-3)
+    .map((ua: UserAchievement) => {
+      const achievement = achievements.find(a => a.badgeId === ua.badgeId);
+      return achievement ? { ...achievement, isUnlocked: true, unlockedAt: ua.unlockedAt } : null;
+    })
+    .filter(Boolean) as AchievementWithStatus[];
 
   const handleWalletConnection = (connected: boolean, address?: string, isOwner?: boolean) => {
     setWalletState({
@@ -121,6 +149,15 @@ export default function Home() {
       const response = await apiRequest('POST', '/api/generate-contract', deploymentData);
       const result = await response.json();
       
+      // Handle new achievements
+      if (result.newAchievements && result.newAchievements.length > 0) {
+        const achievementDetails = result.newAchievements.map((userAchievement: any) => {
+          return (achievements as Achievement[]).find(a => a.badgeId === userAchievement.badgeId);
+        }).filter(Boolean);
+        
+        setNewAchievements(achievementDetails);
+      }
+      
       // Check if payment is required (not owner wallet)
       if (!walletState.isOwner && result.totalCost > 0) {
         try {
@@ -195,6 +232,33 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {walletState.isConnected && (
+                <div className="flex items-center space-x-2">
+                  {/* Recent achievements display */}
+                  <div className="flex space-x-1">
+                    {recentAchievements.slice(0, 3).map((achievement) => (
+                      <AchievementBadge key={achievement.badgeId} achievement={achievement} size="sm" />
+                    ))}
+                  </div>
+                  
+                  {/* Achievements panel trigger */}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setAchievementsPanelOpen(true)}
+                    className="border-accent text-accent hover:bg-accent hover:text-dark"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Achievements
+                    {userAchievements.length > 0 && (
+                      <span className="ml-2 bg-accent text-dark rounded-full px-2 py-0.5 text-xs">
+                        {userAchievements.length}
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              )}
+              
               {walletState.isOwner && (
                 <Link href="/admin">
                   <Button variant="outline" size="sm" className="border-accent text-accent hover:bg-accent hover:text-dark">
@@ -440,6 +504,22 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Achievement Notifications */}
+      {newAchievements.map((achievement, index) => (
+        <AchievementNotification
+          key={`${achievement.badgeId}-${index}`}
+          achievement={achievement}
+          onDismiss={() => setNewAchievements(prev => prev.filter((_, i) => i !== index))}
+        />
+      ))}
+
+      {/* Achievements Panel */}
+      <AchievementsPanel
+        userAddress={walletState.address}
+        isOpen={achievementsPanelOpen}
+        onClose={() => setAchievementsPanelOpen(false)}
+      />
     </div>
   );
 }

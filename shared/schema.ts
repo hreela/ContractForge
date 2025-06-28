@@ -36,6 +36,27 @@ export const featurePricing = pgTable("feature_pricing", {
   updatedBy: text("updated_by"), // admin address who updated
 });
 
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  badgeId: text("badge_id").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  icon: text("icon").notNull(),
+  color: text("color").notNull(),
+  category: text("category").notNull(), // "deployment", "features", "volume", "social"
+  requirement: text("requirement").notNull(), // JSON string with requirement details
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userAddress: text("user_address").notNull(),
+  badgeId: text("badge_id").notNull(),
+  unlockedAt: timestamp("unlocked_at").defaultNow(),
+  contractId: integer("contract_id"), // Optional reference to triggering contract
+});
+
 export const insertContractSchema = createInsertSchema(contracts).omit({
   id: true,
   createdAt: true,
@@ -57,6 +78,16 @@ export const updateFeaturePricingSchema = createInsertSchema(featurePricing).omi
   updatedAt: true,
 }).partial();
 
+export const insertAchievementSchema = createInsertSchema(achievements).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserAchievementSchema = createInsertSchema(userAchievements).omit({
+  id: true,
+  unlockedAt: true,
+});
+
 export type InsertContract = z.infer<typeof insertContractSchema>;
 export type Contract = typeof contracts.$inferSelect;
 export type InsertContractFeature = z.infer<typeof insertContractFeatureSchema>;
@@ -64,6 +95,10 @@ export type ContractFeature = typeof contractFeatures.$inferSelect;
 export type InsertFeaturePricing = z.infer<typeof insertFeaturePricingSchema>;
 export type FeaturePricing = typeof featurePricing.$inferSelect;
 export type UpdateFeaturePricing = z.infer<typeof updateFeaturePricingSchema>;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
+export type UserAchievement = typeof userAchievements.$inferSelect;
 
 // Web3 types
 export const deploymentSchema = z.object({
