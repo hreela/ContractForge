@@ -24,22 +24,34 @@ export class Web3Service {
       this.provider = new ethers.BrowserProvider(window.ethereum);
       
       console.log("Web3Service: Requesting account access");
-      await window.ethereum.request({ method: "eth_requestAccounts" });
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      console.log("Web3Service: Accounts received:", accounts);
       
       console.log("Web3Service: Switching to Polygon network");
       await this.switchToPolygon();
+      console.log("Web3Service: Network switch completed");
       
       console.log("Web3Service: Getting signer");
       this.signer = await this.provider.getSigner();
+      console.log("Web3Service: Signer obtained");
       
       console.log("Web3Service: Getting address");
       const address = await this.signer.getAddress();
+      console.log("Web3Service: Address obtained:", address);
+      
       const isOwner = address.toLowerCase() === OWNER_WALLET.toLowerCase();
+      console.log("Web3Service: Owner check:", { address, isOwner, ownerWallet: OWNER_WALLET });
 
       console.log("Web3Service: Connection successful", { address, isOwner });
       return { address, isOwner };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Web3Service: Error connecting wallet:", error);
+      console.error("Web3Service: Error details:", {
+        name: error?.name,
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack
+      });
       throw error;
     }
   }
@@ -48,13 +60,17 @@ export class Web3Service {
     if (!window.ethereum) return;
 
     try {
+      console.log("Web3Service: Attempting to switch to Polygon chain");
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: `0x${POLYGON_CHAIN_ID.toString(16)}` }],
       });
+      console.log("Web3Service: Successfully switched to Polygon chain");
     } catch (error: any) {
+      console.log("Web3Service: Error switching chain, code:", error.code);
       // If chain is not added, add it
       if (error.code === 4902) {
+        console.log("Web3Service: Chain not found, adding Polygon network");
         await window.ethereum.request({
           method: "wallet_addEthereumChain",
           params: [
@@ -71,7 +87,9 @@ export class Web3Service {
             },
           ],
         });
+        console.log("Web3Service: Polygon network added successfully");
       } else {
+        console.error("Web3Service: Error switching to Polygon:", error);
         throw error;
       }
     }
