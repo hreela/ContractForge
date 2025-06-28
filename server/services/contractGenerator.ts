@@ -282,11 +282,28 @@ import "@openzeppelin/contracts/access/Ownable.sol";`;
     if (features.includes('pausable')) {
       imports += `\nimport "@openzeppelin/contracts/security/Pausable.sol";`;
     }
+    
+    if (features.includes('timelock')) {
+      imports += `\nimport "@openzeppelin/contracts/governance/TimelockController.sol";`;
+    }
+    
+    if (features.includes('governance')) {
+      imports += `\nimport "@openzeppelin/contracts/governance/Governor.sol";`;
+      imports += `\nimport "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";`;
+      imports += `\nimport "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";`;
+      imports += `\nimport "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";`;
+      imports += `\nimport "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";`;
+      imports += `\nimport "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";`;
+      imports += `\nimport "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";`;
+    }
 
     // Build contract inheritance
     let inheritance = 'ERC20, Ownable';
     if (features.includes('pausable')) {
       inheritance += ', Pausable';
+    }
+    if (features.includes('governance')) {
+      inheritance = inheritance.replace('ERC20', 'ERC20Votes');
     }
 
     // Start building the contract
@@ -323,6 +340,30 @@ import "@openzeppelin/contracts/access/Ownable.sol";`;
     
     event Blacklisted(address indexed account);
     event Unblacklisted(address indexed account);`;
+      }
+      
+      if (feature === 'timelock' && featureConfig.timelock) {
+        contractBody += `
+    address public timelock;
+    
+    event TimelockSet(address indexed timelock);
+    
+    modifier onlyTimelock() {
+        require(msg.sender == timelock, "Only timelock can call this function");
+        _;
+    }`;
+      }
+      
+      if (feature === 'governance' && featureConfig.governance) {
+        contractBody += `
+    address public governance;
+    
+    event GovernanceSet(address indexed governance);
+    
+    modifier onlyGovernance() {
+        require(msg.sender == governance, "Only governance can call this function");
+        _;
+    }`;
       }
     });
 
@@ -414,6 +455,36 @@ import "@openzeppelin/contracts/access/Ownable.sol";`;
         maxSupply = _maxSupply;
     }`;
       }
+      
+      if (feature === 'timelock' && featureConfig.timelock) {
+        contractBody += `
+
+    function setTimelock(address _timelock) public onlyOwner {
+        require(_timelock != address(0), "Timelock cannot be zero address");
+        timelock = _timelock;
+        emit TimelockSet(_timelock);
+    }
+    
+    function transferOwnershipToTimelock() public onlyOwner {
+        require(timelock != address(0), "Timelock not set");
+        transferOwnership(timelock);
+    }`;
+      }
+      
+      if (feature === 'governance' && featureConfig.governance) {
+        contractBody += `
+
+    function setGovernance(address _governance) public onlyOwner {
+        require(_governance != address(0), "Governance cannot be zero address");
+        governance = _governance;
+        emit GovernanceSet(_governance);
+    }
+    
+    function transferOwnershipToGovernance() public onlyOwner {
+        require(governance != address(0), "Governance not set");
+        transferOwnership(governance);
+    }`;
+      }
     });
 
     // Add override functions based on features
@@ -489,10 +560,101 @@ import "@openzeppelin/contracts/access/Ownable.sol";`;
     contractBody += `
 }`;
 
+    // Add additional contracts for governance features
+    let additionalContracts = '';
+    
+    if (features.includes('timelock') && featureConfig.timelock) {
+      const delayInSeconds = (featureConfig.timelock.delay || 24) * 3600; // Convert hours to seconds
+      const proposers = featureConfig.timelock.proposers?.length ? 
+        `[${featureConfig.timelock.proposers.map(addr => `address(${addr})`).join(', ')}]` : 
+        'new address[](0)';
+      const executors = featureConfig.timelock.executors?.length ? 
+        `[${featureConfig.timelock.executors.map(addr => `address(${addr})`).join(', ')}]` : 
+        'new address[](0)';
+        
+      additionalContracts += `
+
+contract ${tokenName}Timelock is TimelockController {
+    constructor() TimelockController(
+        ${delayInSeconds}, // ${featureConfig.timelock.delay || 24} hours in seconds
+        ${proposers}, // proposers
+        ${executors}  // executors
+    ) {}
+}`;
+    }
+    
+    if (features.includes('governance') && featureConfig.governance) {
+      const votingDelay = featureConfig.governance.votingDelay || 7200;
+      const votingPeriod = featureConfig.governance.votingPeriod || 50400;
+      const proposalThreshold = featureConfig.governance.proposalThreshold || '1000000';
+      const quorumPercentage = featureConfig.governance.quorumPercentage || 10;
+      
+      additionalContracts += `
+
+contract ${tokenName}Governor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction ${features.includes('timelock') ? ', GovernorTimelockControl' : ''} {
+    constructor(
+        IVotes _token${features.includes('timelock') ? ',\n        TimelockController _timelock' : ''}
+    )
+        Governor("${tokenName} Governor")
+        GovernorSettings(
+            ${votingDelay}, // voting delay: ${votingDelay} blocks
+            ${votingPeriod}, // voting period: ${votingPeriod} blocks
+            ${proposalThreshold} // proposal threshold: ${proposalThreshold} tokens
+        )
+        GovernorVotes(_token)
+        GovernorVotesQuorumFraction(${quorumPercentage}) // ${quorumPercentage}% quorum${features.includes('timelock') ? `
+        GovernorTimelockControl(_timelock)` : ''}
+    {}
+
+    function votingDelay() public view override(IGovernor, GovernorSettings) returns (uint256) {
+        return super.votingDelay();
+    }
+
+    function votingPeriod() public view override(IGovernor, GovernorSettings) returns (uint256) {
+        return super.votingPeriod();
+    }
+
+    function quorum(uint256 blockNumber) public view override(IGovernor, GovernorVotesQuorumFraction) returns (uint256) {
+        return super.quorum(blockNumber);
+    }
+
+    function proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256) {
+        return super.proposalThreshold();
+    }${features.includes('timelock') ? `
+
+    function _execute(
+        uint256 proposalId,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal override(Governor, GovernorTimelockControl) {
+        super._execute(proposalId, targets, values, calldatas, descriptionHash);
+    }
+
+    function _cancel(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        bytes32 descriptionHash
+    ) internal override(Governor, GovernorTimelockControl) returns (uint256) {
+        return super._cancel(targets, values, calldatas, descriptionHash);
+    }
+
+    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
+        return super._executor();
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(Governor, GovernorTimelockControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }` : ''}
+}`;
+    }
+
     // Combine everything
     return `${imports}
 
-contract ${tokenName} is ${inheritance} {${contractBody}`;
+contract ${tokenName} is ${inheritance} {${contractBody}${additionalContracts}`;
   }
 
   getVerificationInstructions(contractAddress: string, constructorArgs: string[]): string {

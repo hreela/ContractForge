@@ -55,6 +55,7 @@ export const CONTRACT_FEATURES = [
     description: "Time-delayed execution of admin functions",
     icon: "clock",
     color: "indigo",
+    configurable: true,
   },
   {
     name: "governance",
@@ -62,5 +63,6 @@ export const CONTRACT_FEATURES = [
     description: "Voting and proposal system for token holders",
     icon: "vote-yea",
     color: "green",
+    configurable: true,
   },
 ];

@@ -278,6 +278,142 @@ export default function FeatureSelector({
                           </div>
                         </div>
                       )}
+                      
+                      {feature.name === 'timelock' && (
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-gray-300">Timelock Settings</h4>
+                          <div className="grid grid-cols-1 gap-4">
+                            <div>
+                              <Label htmlFor="timelock-delay" className="text-sm text-gray-400">Delay (hours)</Label>
+                              <Input
+                                id="timelock-delay"
+                                name="timelock-delay"
+                                type="number"
+                                min="1"
+                                max="168"
+                                value={localConfig.timelock?.delay || 24}
+                                onChange={(e) => updateFeatureConfig('timelock', {
+                                  ...localConfig.timelock,
+                                  delay: parseInt(e.target.value) || 24,
+                                  proposers: localConfig.timelock?.proposers || [],
+                                  executors: localConfig.timelock?.executors || []
+                                })}
+                                className="bg-surface-light border-gray-600"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Time delay before admin functions can execute</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="timelock-proposers" className="text-sm text-gray-400">Proposer Addresses (comma-separated)</Label>
+                              <Input
+                                id="timelock-proposers"
+                                name="timelock-proposers"
+                                type="text"
+                                placeholder="0x..., 0x..."
+                                value={localConfig.timelock?.proposers?.join(', ') || ''}
+                                onChange={(e) => updateFeatureConfig('timelock', {
+                                  ...localConfig.timelock,
+                                  delay: localConfig.timelock?.delay || 24,
+                                  proposers: e.target.value.split(',').map(addr => addr.trim()).filter(addr => addr),
+                                  executors: localConfig.timelock?.executors || []
+                                })}
+                                className="bg-surface-light border-gray-600 font-mono text-sm"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Addresses that can propose transactions</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="timelock-executors" className="text-sm text-gray-400">Executor Addresses (comma-separated)</Label>
+                              <Input
+                                id="timelock-executors"
+                                name="timelock-executors"
+                                type="text"
+                                placeholder="0x..., 0x..."
+                                value={localConfig.timelock?.executors?.join(', ') || ''}
+                                onChange={(e) => updateFeatureConfig('timelock', {
+                                  ...localConfig.timelock,
+                                  delay: localConfig.timelock?.delay || 24,
+                                  proposers: localConfig.timelock?.proposers || [],
+                                  executors: e.target.value.split(',').map(addr => addr.trim()).filter(addr => addr)
+                                })}
+                                className="bg-surface-light border-gray-600 font-mono text-sm"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Addresses that can execute delayed transactions</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {feature.name === 'governance' && (
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-gray-300">Governance Settings</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="governance-voting-delay" className="text-sm text-gray-400">Voting Delay (blocks)</Label>
+                              <Input
+                                id="governance-voting-delay"
+                                name="governance-voting-delay"
+                                type="number"
+                                min="1"
+                                value={localConfig.governance?.votingDelay || 7200}
+                                onChange={(e) => updateFeatureConfig('governance', {
+                                  ...localConfig.governance,
+                                  votingDelay: parseInt(e.target.value) || 7200
+                                })}
+                                className="bg-surface-light border-gray-600"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Blocks to wait before voting starts (~1 day)</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="governance-voting-period" className="text-sm text-gray-400">Voting Period (blocks)</Label>
+                              <Input
+                                id="governance-voting-period"
+                                name="governance-voting-period"
+                                type="number"
+                                min="1"
+                                value={localConfig.governance?.votingPeriod || 50400}
+                                onChange={(e) => updateFeatureConfig('governance', {
+                                  ...localConfig.governance,
+                                  votingPeriod: parseInt(e.target.value) || 50400
+                                })}
+                                className="bg-surface-light border-gray-600"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Blocks voting is active (~1 week)</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="governance-proposal-threshold" className="text-sm text-gray-400">Proposal Threshold (tokens)</Label>
+                              <Input
+                                id="governance-proposal-threshold"
+                                name="governance-proposal-threshold"
+                                type="text"
+                                placeholder="1000000"
+                                value={localConfig.governance?.proposalThreshold || ''}
+                                onChange={(e) => updateFeatureConfig('governance', {
+                                  ...localConfig.governance,
+                                  proposalThreshold: e.target.value
+                                })}
+                                className="bg-surface-light border-gray-600"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">Minimum tokens to create proposals</p>
+                            </div>
+                            <div>
+                              <Label htmlFor="governance-quorum" className="text-sm text-gray-400">Quorum (%)</Label>
+                              <Input
+                                id="governance-quorum"
+                                name="governance-quorum"
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={localConfig.governance?.quorumPercentage || 10}
+                                onChange={(e) => updateFeatureConfig('governance', {
+                                  ...localConfig.governance,
+                                  quorumPercentage: parseInt(e.target.value) || 10
+                                })}
+                                className="bg-surface-light border-gray-600"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">% of total supply needed for quorum</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

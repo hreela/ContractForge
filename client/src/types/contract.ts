@@ -19,6 +19,17 @@ export interface FeatureConfig {
   maxsupply?: {
     maxSupply: string;
   };
+  timelock?: {
+    delay: number; // in hours
+    proposers: string[]; // array of addresses that can propose
+    executors: string[]; // array of addresses that can execute
+  };
+  governance?: {
+    votingDelay: number; // blocks to wait before voting starts
+    votingPeriod: number; // blocks voting is active
+    proposalThreshold: string; // minimum tokens to create proposal
+    quorumPercentage: number; // percentage of total supply needed for quorum
+  };
 }
 
 export interface TokenConfig {
