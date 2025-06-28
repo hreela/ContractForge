@@ -74,7 +74,7 @@ export default function FeatureSelector({
     }));
   };
 
-  const totalCost = 5 + selectedFeatures.reduce((sum, feature) => {
+  const totalCost = 20 + selectedFeatures.reduce((sum, feature) => {
     const featureData = CONTRACT_FEATURES.find(f => f.name === feature);
     return sum + (featureData?.price || 0);
   }, 0);
@@ -437,7 +437,7 @@ export default function FeatureSelector({
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Base Platform Fee</span>
               <span className={`text-white font-semibold ${isOwner ? 'line-through opacity-50' : ''}`}>
-                $20 POL
+                20 POL
               </span>
             </div>
             
@@ -449,7 +449,7 @@ export default function FeatureSelector({
                 <div key={featureName} className="flex justify-between items-center text-sm">
                   <span className="text-gray-400 capitalize">{feature.name}</span>
                   <span className={`text-white ${isOwner ? 'line-through opacity-50' : ''}`}>
-                    ${feature.price} POL
+                    {feature.price} POL
                   </span>
                 </div>
               );
@@ -460,7 +460,7 @@ export default function FeatureSelector({
             <div className="flex justify-between items-center text-lg">
               <span className="text-white font-semibold">Total Cost</span>
               <span className={`font-bold ${isOwner ? 'text-accent' : 'text-accent'}`}>
-                {isOwner ? 'FREE' : `$${totalCost} POL`}
+                {isOwner ? 'FREE' : `${totalCost} POL`}
               </span>
             </div>
             
@@ -471,7 +471,7 @@ export default function FeatureSelector({
                   <span className="font-medium">Payment Required</span>
                 </div>
                 <p className="text-amber-300 text-xs mt-1">
-                  You will be prompted to pay ${totalCost} POL before deployment.
+                  You will be prompted to pay {totalCost} POL before deployment.
                 </p>
               </div>
             )}
