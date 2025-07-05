@@ -101,12 +101,20 @@ The application follows a modern full-stack architecture with clear separation b
   - Added proper TypeScript typing for all achievement-related data structures
 
 - **June 28, 2025**: Production deployment preparation and branding
-  - Set site title: "TokenCraft - Smart Contract Generator for Polygon"
+  - Updated site title: "Deploy Smart Contracts Without Coding"
   - Created professional SVG favicon with purple-blue gradient hexagon design
   - Added comprehensive SEO meta tags including Open Graph and Twitter cards
   - Updated API client to support environment variables for production deployment
   - Created detailed deployment guide for Netlify frontend + Railway/Render backend
   - Configured netlify.toml with proper build settings and redirects
+
+- **June 28, 2025**: Vercel deployment configuration
+  - Created comprehensive Vercel deployment guide with step-by-step instructions
+  - Set up API routes structure for Vercel serverless functions
+  - Configured vercel.json with proper build settings and routing
+  - Added @vercel/node package for serverless function types
+  - Created health check, contracts, features, and achievements API endpoints
+  - Documented cost analysis and performance optimization strategies
 
 ## Changelog
 - June 27, 2025. Initial setup
