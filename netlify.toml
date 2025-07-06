@@ -6,10 +6,10 @@
   NODE_VERSION = "18"
   NPM_VERSION = "8"
 
+
 [[redirects]]
   from = "/api/*"
-  to = "https://contractforge.onrender.com/api/:splat"
-  
+  to = "https://contractforge.onrender.com/api/:splat"  
   status = 200
   force = true
 
