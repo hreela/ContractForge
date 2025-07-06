@@ -2,11 +2,8 @@ import { defineConfig } from 'vite';
 import path from 'path';
 
 export default defineConfig(async () => {
-  const cartographer = await import("@replit/vite-plugin-cartographer");
-
-  return {
-    plugins: [cartographer.default()],
-    resolve: {
+    return {
+      resolve: {
       alias: {
         '@': path.resolve('client', 'src'),
         '@shared': path.resolve('shared'),
