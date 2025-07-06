@@ -1,18 +1,14 @@
 import { defineConfig } from 'vite';
 import path from 'path';
 
-export default defineConfig(async () => {
-    return {
-      resolve: {
-      alias: {
-        '@': path.resolve('client', 'src'),
-        '@shared': path.resolve('shared'),
-        '@assets': path.resolve('attached_assets'),
-      }
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
     },
-    root: path.resolve('client'),
-    build: {
-      outDir: path.resolve('dist/public'),
-    }
-  };
+  },
+  root: path.resolve(__dirname),
+  build: {
+    outDir: path.resolve(__dirname, 'dist'),
+  },
 });
