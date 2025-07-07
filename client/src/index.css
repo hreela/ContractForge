@@ -2,55 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom CSS Variables */
 :root {
-    @apply bg-[hsl(var(--background))];
-  --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(215, 28%, 17%);
-  --muted-foreground: hsl(215, 16%, 47%);
-  --popover: hsl(222, 47%, 11%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(222, 47%, 11%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(215, 28%, 17%);
-  --input: hsl(215, 28%, 17%);
-  --primary: hsl(228, 76%, 60%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(257, 77%, 63%);
-  --secondary-foreground: hsl(0, 0%, 98%);
-  --accent: hsl(162, 94%, 44%);
-  --accent-foreground: hsl(0, 0%, 0%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(215, 16%, 47%);
+  --background: 222 47% 11%;
+  --foreground: 0 0% 98%;
+  --muted: 215 28% 17%;
+  --muted-foreground: 215 16% 47%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 0 0% 98%;
+  --card: 222 47% 11%;
+  --card-foreground: 0 0% 98%;
+  --border: 215 28% 17%;
+  --input: 215 28% 17%;
+  --primary: 228 76% 60%;
+  --primary-foreground: 211 100% 99%;
+  --secondary: 257 77% 63%;
+  --secondary-foreground: 0 0% 98%;
+  --accent: 162 94% 44%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 215 16% 47%;
   --radius: 0.5rem;
-  
-  /* Custom Web3 colors */
-  --dark: hsl(222, 47%, 11%);
-  --surface: hsl(215, 28%, 17%);
-  --surface-light: hsl(215, 16%, 27%);
-}
 
-.dark {
-      @apply bg-[hsl(var(--background))];
-  --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(215, 28%, 17%);
-  --muted-foreground: hsl(215, 16%, 47%);
-  --popover: hsl(222, 47%, 11%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(222, 47%, 11%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(215, 28%, 17%);
-  --input: hsl(215, 28%, 17%);
-  --primary: hsl(228, 76%, 60%);
-  --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(257, 77%, 63%);
-  --secondary-foreground: hsl(0, 0%, 98%);
-  --accent: hsl(162, 94%, 44%);
-  --accent-foreground: hsl(0, 0%, 0%);
-  --destructive: hsl(0, 62.8%, 30.6%);
-  --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(215, 16%, 47%);
-  --radius: 0.5rem;
+  --dark: 222 47% 11%;
+  --surface: 215 28% 17%;
+  --surface-light: 215 16% 27%;
 }
 
 @layer base {
@@ -58,12 +35,12 @@
     @apply border-border;
   }
 
-  body {
-    @apply font-sans antialiased bg-background text-foreground dark;
-  }
-  
   html {
-    @apply dark;
+    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
+  }
+
+  body {
+    @apply font-sans antialiased;
   }
 }
 
@@ -73,13 +50,13 @@
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.10);
   }
-  
+
   .gradient-border {
     background: linear-gradient(45deg, hsl(228, 76%, 60%), hsl(257, 77%, 63%), hsl(162, 94%, 44%));
     padding: 2px;
     border-radius: 12px;
   }
-  
+
   .gradient-border-content {
     background: hsl(215, 28%, 17%);
     border-radius: 10px;
@@ -88,48 +65,45 @@
 }
 
 @layer utilities {
-  .border-border {
-    @apply border;
-    border-color: var(--border);
+  .bg-background {
+    background-color: hsl(var(--background));
   }
-  
+
+  .text-foreground {
+    color: hsl(var(--foreground));
+  }
+
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+
   .animate-pulse-glow {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
-  
+
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-bounceIn {
+    animation: bounceIn 0.8s ease-out forwards;
+  }
+
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
 }
 
+/* Animations */
 @keyframes float {
-  0%, 100% { 
-    transform: translateY(0px); 
-  }
-  50% { 
-    transform: translateY(-20px); 
-  }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(215, 28%, 17%);
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(215, 16%, 47%);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(162, 94%, 44%);
-}
-
-/* Wallet Connection Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -160,25 +134,22 @@
 }
 
 @keyframes shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-3px);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translateX(3px);
-  }
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-out forwards;
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-.animate-bounceIn {
-  animation: bounceIn 0.8s ease-out forwards;
+::-webkit-scrollbar-track {
+  background: hsl(215, 28%, 17%);
 }
-
-.animate-shake {
-  animation: shake 0.5s ease-in-out;
+::-webkit-scrollbar-thumb {
+  background: hsl(215, 16%, 47%);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(162, 94%, 44%);
 }
