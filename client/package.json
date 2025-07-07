@@ -13,7 +13,8 @@
     "postcss": "^8.4.0",
     "autoprefixer": "^10.4.0",
     "wouter": "^2.10.0",
-    "@tanstack/react-query": "^5.0.0"
+    "@tanstack/react-query": "^5.0.0",
+    "@radix-ui/react-tooltip": "^1.0.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
