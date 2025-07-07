@@ -4,7 +4,7 @@ const config: Config = {
   darkMode: "class", // Enables class-based dark mode
 
   content: [
-    './index.html',
+    './client/index.html',
     './src/**/*.{js,ts,jsx,tsx}',
   ],
 
