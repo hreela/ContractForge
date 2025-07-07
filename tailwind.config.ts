@@ -1,7 +1,8 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"], // Enables class-based dark mode
+  darkMode: "class", // Enables class-based dark mode
+
   content: ["./client/index.html", "./client/src/**/*.{js,ts,jsx,tsx}"],
 
   theme: {
@@ -11,9 +12,18 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+
+        dark: "hsl(var(--dark))",
+        surface: "hsl(var(--surface))",
+        "surface-light": "hsl(var(--surface-light))",
 
         card: {
           DEFAULT: "hsl(var(--card))",
@@ -50,10 +60,6 @@ const config: Config = {
           foreground: "hsl(var(--destructive-foreground))",
         },
 
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",
@@ -61,10 +67,6 @@ const config: Config = {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-
-        dark: "hsl(var(--dark))",
-        surface: "hsl(var(--surface))",
-        "surface-light": "hsl(var(--surface-light))",
 
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
