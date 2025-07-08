@@ -2,21 +2,30 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+const allowedOrigins = [
+  'https://contractforge.netlify.app',
+  'https://contractforge.in'
+];
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://contractforge.in');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
+  const origin = req.headers.origin as string;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
   } else {
     next();
   }
 });
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // Disable CSP to allow MetaMask and Web3 functionality
 app.use((req, res, next) => {
